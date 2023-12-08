@@ -212,7 +212,7 @@ function animate() {
         } else if (enemy.radius - 10 > 5) {
           score += 100;
           gsap.to(enemy, {
-            radius: (enemy.type === 'boss') ? enemy.radius - 5 : enemy.radius - 10,
+            radius: (enemy.type === 'boss') ? enemy.radius - 10 : enemy.radius - 10,
           });
           setTimeout(() => {
             if (projectile.type !== 'infinity') projectiles.splice(projectileIndex, 1);

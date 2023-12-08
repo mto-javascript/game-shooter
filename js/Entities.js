@@ -32,14 +32,15 @@ export class Player extends Entity {
 
 
   draw(munition) {
+    super.draw()
     if (this.type == "image") {
       this.image = new Image();
       this.image.src = this.url;
 
       ctx.drawImage(this.image, 
-          this.x - this.radius, 
-          this.y - this.radius,
-          this.radius*2, this.radius*2);
+          this.x - this.radius*0.9, 
+          this.y - this.radius*0.9,
+          this.radius*1.8, this.radius*1.8);
     }
     this.munitionDrawn(munition)
   }
