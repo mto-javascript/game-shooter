@@ -13,9 +13,12 @@ canvas.height = innerHeight;
 // DOM elements for UI
 const scoreEl = document.getElementById("scoreEl");
 const difficultEl = document.getElementById("difficultEl");
+const difficultBig = document.getElementById("difficultBig");
 const bonusEl = document.getElementById("bonusEl");
 const startGameBtn = document.getElementById("startGameBtn");
 const modalEl = document.getElementById("modalEl");
+const modalContentEl = document.getElementById("modalContentEl");
+const guideEl = document.getElementById("guideEl");
 const bigScoreEl = document.getElementById("bigScoreEl");
 const gunshotSound = document.getElementById("gunshotEl");
 const rocketSound = document.getElementById("rocketEl");
@@ -23,6 +26,8 @@ const infinitySound = document.getElementById("infinityEl");
 const explosiveSound = document.getElementById("explosiveEl");
 const bossSound = document.getElementById("bossEl");
 const selfSound = document.getElementById("selfEl");
+const bg = '../assets/images/gameover.jpg'
+modalContentEl.classList.add('gamestart')
 
 // -------------------------------------------------------------
 // INITIALIZE
@@ -42,12 +47,13 @@ const difficultMax = 10
 const difficultBase = 500
 
 function init() {
-  player = new Player(canvas.width / 2, canvas.height / 2, 15, "white");
+  // player = new Player(canvas.width / 2, canvas.height / 2, 15, "white");
+  player = new Player(canvas.width / 2, canvas.height / 2, 15, "white", "image", "../assets/images/smiley.gif");
   projectiles = [];
   enemies = [];
   particles = [];
   bonus = {rocket: 0, infinity: 0};
-  munition = {rocketBullet: 0, infinityBullet: 3, rocketMax: 5, infinityMax: 10}
+  munition = {rocketBullet: 0, infinityBullet: 4, rocketMax: 4, infinityMax: 10}
 
   score = 0;
   difficult = 0;
@@ -69,7 +75,7 @@ function spawnEnemiesLoop() {
 
 function spawnEnemy(type = 'mob') {
     // random radius
-    const radius = type === 'boss'? 80 : Math.random() * (30 - 4) + 4;
+    const radius = type === 'boss'? 60 : Math.random() * (30 - 4) + 4;
 
     // random red, green and blue value
     const r = Math.floor(Math.random() * 256);
@@ -251,6 +257,7 @@ function animate() {
     const distPlayerEnemy = Math.hypot(player.x - enemy.x, player.y - enemy.y);
 
     if (distPlayerEnemy - enemy.radius - player.radius <= 0) {
+      playSound('self')
       // particles creation for engame sceen
       for (let i = 0; i < 8; i++) {
         // random red, green and blue value
@@ -274,7 +281,6 @@ function animate() {
         );
       }
 
-      playSound('self')
       gsap.to(player, {
         radius: 0
       });
@@ -286,6 +292,8 @@ function animate() {
         bigScoreEl.innerText = score;
         startGameBtn.innerText = "Restart Game";
         modalEl.style.display = "flex";
+        difficultBig.innerHTML = 'Difficult ' + difficult
+        modalContentEl.classList.add('gameover')
       }, 1500);
     }
 
@@ -420,9 +428,6 @@ function addBonus() {
   ctx.fillStyle = color;
   ctx.textAlign = "center";
   ctx.fillText(msg, canvas.width/2, canvas.height/2 - 200);
-  // setTimeout(() => {
-    // ctx.fillText(msg, canvas.width/2, canvas.height/2 - 200);
-  // }, 1000 )
 }
 
 // -------------------------------------------
@@ -472,6 +477,7 @@ document.addEventListener("keydown", function(event) {
 startGameBtn.addEventListener("click", () => {
   init();
   modalEl.style.display = "none";
+  guideEl.style.display = 'none'
   addBonus()
   setTimeout(() => {
     animate();

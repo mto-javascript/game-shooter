@@ -23,15 +23,31 @@ class Entity {
 
 
 export class Player extends Entity {
-  constructor(x, y, radius, color) {
+  constructor(x, y, radius, color, type = '', url = '') {
     super(x, y, radius, color);
     this.status = 'alive'
+    this.type = type;
+    this.url = url;
   }
 
+
   draw(munition) {
-    super.draw()
+    if (this.type == "image") {
+      this.image = new Image();
+      this.image.src = this.url;
+
+      ctx.drawImage(this.image, 
+          this.x - this.radius, 
+          this.y - this.radius,
+          this.radius*2, this.radius*2);
+    }
     this.munitionDrawn(munition)
   }
+  
+  // draw(munition) {
+  //   super.draw()
+  //   this.munitionDrawn(munition)
+  // }
 
   munitionDrawn(munition) {
     ctx.font = "20px Comic Sans MS";
