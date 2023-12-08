@@ -1,0 +1,24 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: black;
+    overflow: hidden;
+    /* color: white; */
+}
+
+#game-container {
+    border: 1px solid red;
+    border-radius: 10px;
+}
+
+#modalEl .bg-white {
+    border-radius: 10px;
+}
+
+#bigScoreEl {
+    color: rgb(173, 14, 14);
+}
