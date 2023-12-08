@@ -25,7 +25,18 @@ class Entity {
 export class Player extends Entity {
   constructor(x, y, radius, color) {
     super(x, y, radius, color);
-    // this.munition = munition;
+  }
+
+  draw(munition) {
+    super.draw()
+    this.munitionDrawn(munition)
+  }
+
+  munitionDrawn(munition) {
+    ctx.font = "20px Comic Sans MS";
+    ctx.fillStyle = "red";
+    ctx.textAlign = "center";
+    ctx.fillText(munition.rocketBullet, canvas.width/2, canvas.height/2 + 7);
   }
 }
 

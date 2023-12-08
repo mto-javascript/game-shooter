@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Animated Circle</title>
+  <style>
+    canvas {
+      border: 1px solid #000;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="myCanvas" width="1500" height="400"></canvas>
+
+<script>
+  const canvas = document.getElementById('myCanvas');
+  const ctx = canvas.getContext('2d');
+
+  let animationId;
+  let isPaused = false;
+
+  function drawCircle(x, y, radius) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, 2 * Math.PI);
+    ctx.fillStyle = 'blue';
+    ctx.fill();
+    ctx.closePath();
+  }
+
+  function animate() {
+    // Perform animation logic here
+    // For simplicity, let's just move a circle from left to right
+
+    const speed = 2;
+    let x = 0;
+
+    function frame() {
+      if (isPaused) {
+        return;
+      }
+
+      x += speed;
+      drawCircle(x, canvas.height / 2, 20);
+
+      if (x < canvas.width) {
+        animationId = requestAnimationFrame(frame);
+      }
+    }
+
+    frame();
+  }
+
+  // Start the animation
+  animate();
+
+  // Pause/unpause the animation on user input or event
+  window.addEventListener('keydown', (event) => {
+    if (event.key === 'p' || event.key === 'P') {
+      isPaused = !isPaused; // Toggle the pause state
+      if (!isPaused) {
+        animate(); // If unpaused, start the animation again
+      }
+    }
+  });
+
+</script>
+
+</body>
+</html>

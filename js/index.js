@@ -10,17 +10,10 @@ const ctx = canvas.getContext("2d");
 canvas.width = innerWidth;
 canvas.height = innerHeight;
 
-let score = 0;
-let coords = {x:0, y:0}
-let rocketNb = 0
-let infinityNb = 4
-const rocketMax = 5
-let difficult = 0
-const difficultMax = 10
-
 // DOM elements for UI
 const scoreEl = document.getElementById("scoreEl");
 const difficultEl = document.getElementById("difficultEl");
+const bonusEl = document.getElementById("bonusEl");
 const startGameBtn = document.getElementById("startGameBtn");
 const modalEl = document.getElementById("modalEl");
 const bigScoreEl = document.getElementById("bigScoreEl");
@@ -32,22 +25,30 @@ let player = new Player(canvas.width / 2, canvas.height / 2, 10, "white");
 let projectiles = [];
 let enemies = [];
 let particles = [];
+let bonus = [];
 let ennemyLoop
-let pause = false
+
+let score = 0;
+let coords = {x:0, y:0}
+let munition = {}
+let difficult = 0
+const difficultMax = 10
+const difficultBase = 500
 
 function init() {
   player = new Player(canvas.width / 2, canvas.height / 2, 15, "white");
   projectiles = [];
   enemies = [];
   particles = [];
-  rocketNb = 0
-  infinityNb = 4
+  bonus = {rocket: 0, infinity: 0};
+  munition = {rocketBullet: 0, infinityBullet: 3, rocketMax: 5, infinityMax: 10}
 
   score = 0;
   difficult = 0;
   scoreEl.innerText = score;
   bigScoreEl.innerText = score;
   difficultEl.innerHTML = difficult;
+  bonusEl.innerHTML = '+' + bonus.rocket + '/' + bonus.infinity
 }
 
 
@@ -62,7 +63,7 @@ function spawnEnemiesLoop() {
 
 function spawnEnemy(type = 'mob') {
     // random radius
-    const radius = type === 'boss'? 100 : Math.random() * (30 - 4) + 4;
+    const radius = type === 'boss'? 80 : Math.random() * (30 - 4) + 4;
 
     // random red, green and blue value
     const r = Math.floor(Math.random() * 256);
@@ -95,21 +96,10 @@ function spawnEnemy(type = 'mob') {
       y: Math.sin(angle),
     };
 
-    // if (type === 'boss') {
-    // } else {
-    // }
-
     // add a new enemy in enemies array
     enemies.push(new Enemy(x, y, radius, color, velocity, type));
 }
 
-
-function munitionDrawn() {
-  ctx.font = "20px Comic Sans MS";
-  ctx.fillStyle = "red";
-  ctx.textAlign = "center";
-  ctx.fillText(rocketNb, canvas.width/2, canvas.height/2 + 7);
-}
 
 
 
@@ -117,9 +107,16 @@ function munitionDrawn() {
 // ANIMATION
 // -------------------------------------------------------------
 let animationId;
+let isPaused = false
 
 // animate function executed recursively
 function animate() {
+  if (isPaused) {
+    cancelAnimationFrame(animationId);
+    return;
+  }
+
+
   animationId = requestAnimationFrame(animate);
 
   // fill the canvas with a rectangle
@@ -127,8 +124,7 @@ function animate() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // draw the player in the canvas
-  player.draw();
-  munitionDrawn()
+  player.draw(munition);
 
   // go through the particles array to update all particle positions
   particles.forEach((particle, index) => {
@@ -147,12 +143,9 @@ function animate() {
       projectile.y - projectile.radius < 0 ||
       projectile.y + projectile.radius > canvas.height
     ) {
-      if(projectile.type !== 'infinity') {
-        projectiles.splice(index, 1);
-      } else {
-        // console.log('green hit floor')
-        projectiles.splice(index, 1);
-        changeDirection(projectile)
+      projectiles.splice(index, 1); 
+      if(projectile.type === 'infinity') {
+        loopShoot(projectile)
       }
     }
     projectile.update();
@@ -214,7 +207,15 @@ function animate() {
 
         } else {
           // increase our score
-          score += (enemy.type === 'boss') ? 1000 : 250;
+          if (enemy.type === 'boss') {
+            score += 1000;
+            addBonus()
+            setTimeout(() => {
+              
+            }, 500 )
+          } else {
+            score += 250;
+          }
           setTimeout(() => {
             enemies.splice(enemyIndex, 1);
             if (projectile.type !== 'infinity') projectiles.splice(projectileIndex, 1);
@@ -224,7 +225,7 @@ function animate() {
 
 
         // Check and update difficult base on score
-        let dif = Math.floor(score / 2000);
+        let dif = Math.floor( score / (2000 + difficult*difficultBase) );
         if (difficult < dif && difficult < difficultMax) {
           difficult = dif
           clearInterval(ennemyLoop);  // Clear the existing interval
@@ -266,6 +267,11 @@ function animate() {
           )
         );
       }
+
+      gsap.to(player, {
+        radius: 0
+      });
+
       // end game timeout
       setTimeout(() => {
         cancelAnimationFrame(animationId);
@@ -285,7 +291,7 @@ function animate() {
 // -------------------------------------------------------------
 // ACTION
 // -------------------------------------------------------------
-function changeDirection(projectile) {
+function loopShoot(projectile) {
   // console.log('green hit floor')
   const angle = Math.atan2(projectile.y - player.y, projectile.x - player.x);
   const velocity = {
@@ -310,11 +316,11 @@ const shooter = (x, y, type = 'normal') => {
     if (type === 'rocket') {
         color = 'red'
         radius = 10
-        rocketNb--;
+        munition.rocketBullet--;
     } else if (type === 'infinity') {
         color = 'green'
         radius = 3
-        infinityNb--;
+        munition.infinityBullet--;
     }
 
     let projectile = new Projectile(player.x, player.y, radius, color, velocity, type);
@@ -326,7 +332,7 @@ const shooter = (x, y, type = 'normal') => {
 window.addEventListener("click", (event) => {
     let x = event.clientX
     let y = event.clientY 
-    if (rocketNb > 0)
+    if (munition.rocketBullet > 0)
       shooter(x, y, 'rocket')
     else
       shooter(x, y)
@@ -337,12 +343,43 @@ window.addEventListener("contextmenu", (event) => {
     event.preventDefault();
     let x = event.clientX
     let y = event.clientY 
-    if (infinityNb > 0)
+    if (munition.infinityBullet > 0)
       shooter(x, y, 'infinity')
     else
       shooter(x, y)
 });
 
+
+function addBonus() {
+  let msg, color
+  // Generate a random number between 0 and 1
+  const randomNumber = Math.random();
+  // Convert the random number to either 0 or 1
+  const randomBinary = Math.round(randomNumber);
+  switch (randomBinary) {
+    case 0:
+      bonus.rocket++
+      munition.rocketMax++
+      msg = '+ 1 Rocket'
+      color = 'red'
+      break;
+    case 1:
+      bonus.infinity++
+      munition.infinityBullet++
+      msg = '+ 1 Infinity'
+      color = 'green'
+      break;
+  }
+  bonusEl.innerHTML = '+' + bonus.rocket + '/' + bonus.infinity
+
+  ctx.font = "50px Comic Sans MS";
+  ctx.fillStyle = color;
+  ctx.textAlign = "center";
+  ctx.fillText(msg, canvas.width/2, canvas.height/2 - 200);
+  // setTimeout(() => {
+    // ctx.fillText(msg, canvas.width/2, canvas.height/2 - 200);
+  // }, 1000 )
+}
 
 // -------------------------------------------
 let isMouseOver = false;
@@ -366,16 +403,19 @@ canvas.addEventListener("mouseout", function(event) {
 
 
 function chargeRocket() {
-  if (rocketNb < rocketMax)
-    rocketNb++;
+  if (munition.rocketBullet < munition.rocketMax)
+    munition.rocketBullet++;
 }
 
 // Mouseover event
 document.addEventListener("keydown", function(event) {   
   // You can perform actions based on the pressed key
-  if(event.key === 'Enter') {
-    pause = !pause
-    console.log(pause ? 'Pause' : 'Un Pause');
+  if(event.key === ' ') {
+    isPaused = !isPaused
+    console.log(isPaused ? 'Paused' : 'Un Pause');
+    if (!isPaused) {
+      animate(); // If unpaused, start the animation again
+    }
   }
 });
 
@@ -387,7 +427,10 @@ document.addEventListener("keydown", function(event) {
 startGameBtn.addEventListener("click", () => {
   init();
   modalEl.style.display = "none";
-  animate();
+  addBonus()
+  setTimeout(() => {
+    animate();
+  }, 300 )
   clearInterval(ennemyLoop);      // Clear the existing interval
   spawnEnemiesLoop()              // Call with new Interval
 });
