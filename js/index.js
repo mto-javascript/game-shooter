@@ -17,6 +17,9 @@ const bonusEl = document.getElementById("bonusEl");
 const startGameBtn = document.getElementById("startGameBtn");
 const modalEl = document.getElementById("modalEl");
 const bigScoreEl = document.getElementById("bigScoreEl");
+const gunshotSound = document.getElementById("gunshot");
+const rocketSound = document.getElementById("rocket");
+const explosiveSound = document.getElementById("explosive");
 
 // -------------------------------------------------------------
 // INITIALIZE
@@ -191,6 +194,7 @@ function animate() {
             }, 0);
           } else {
             score += 250;
+            playSound('explosive')
             setTimeout(() => {
               enemies.splice(enemyIndex, 1);
             }, 0);
@@ -216,6 +220,7 @@ function animate() {
           } else {
             score += 250;
           }
+          playSound('explosive')
           setTimeout(() => {
             enemies.splice(enemyIndex, 1);
             if (projectile.type !== 'infinity') projectiles.splice(projectileIndex, 1);
@@ -268,6 +273,7 @@ function animate() {
         );
       }
 
+      playSound('explosive')
       gsap.to(player, {
         radius: 0
       });
@@ -278,7 +284,7 @@ function animate() {
         bigScoreEl.innerText = score;
         startGameBtn.innerText = "Restart Game";
         modalEl.style.display = "flex";
-      }, 1000);
+      }, 1500);
     }
 
 
@@ -332,10 +338,14 @@ const shooter = (x, y, type = 'normal') => {
 window.addEventListener("click", (event) => {
     let x = event.clientX
     let y = event.clientY 
-    if (munition.rocketBullet > 0)
+    let type = 'normal'
+    if (munition.rocketBullet > 0) {
       shooter(x, y, 'rocket')
-    else
+      type = 'rocket'
+    } else {
       shooter(x, y)
+    }
+    playSound(type)
 });
 
 // click listener to add a new projectile in direction of the mouse pointer
@@ -349,6 +359,26 @@ window.addEventListener("contextmenu", (event) => {
       shooter(x, y)
 });
 
+function playSound(type = 'gun') {   
+  switch (type) {
+    case 'rocket':
+      rocketSound.volume = 0.05;
+      rocketSound.playbackRate = 3;
+      rocketSound.play();
+      break;
+    case 'explosive':
+      explosiveSound.volume = 0.2;
+      explosiveSound.playbackRate = 1.5;
+      explosiveSound.play();
+      break;
+    default:
+      // Set the volume to 0.5 (50%)
+      gunshotSound.volume = 0.02;
+      gunshotSound.playbackRate = 3.5;
+      gunshotSound.play();
+      break;
+  }
+}
 
 function addBonus() {
   let msg, color
@@ -388,6 +418,7 @@ let isMouseOver = false;
 function autoShooting() {
   if (isMouseOver) {
       shooter(coords.x, coords.y)
+      playSound()
   }
 }
 
