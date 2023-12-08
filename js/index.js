@@ -17,9 +17,12 @@ const bonusEl = document.getElementById("bonusEl");
 const startGameBtn = document.getElementById("startGameBtn");
 const modalEl = document.getElementById("modalEl");
 const bigScoreEl = document.getElementById("bigScoreEl");
-const gunshotSound = document.getElementById("gunshot");
-const rocketSound = document.getElementById("rocket");
-const explosiveSound = document.getElementById("explosive");
+const gunshotSound = document.getElementById("gunshotEl");
+const rocketSound = document.getElementById("rocketEl");
+const infinitySound = document.getElementById("infinityEl");
+const explosiveSound = document.getElementById("explosiveEl");
+const bossSound = document.getElementById("bossEl");
+const selfSound = document.getElementById("selfEl");
 
 // -------------------------------------------------------------
 // INITIALIZE
@@ -119,7 +122,6 @@ function animate() {
     return;
   }
 
-
   animationId = requestAnimationFrame(animate);
 
   // fill the canvas with a rectangle
@@ -127,7 +129,8 @@ function animate() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // draw the player in the canvas
-  player.draw(munition);
+  if(player.status === 'alive')
+    player.draw(munition);
 
   // go through the particles array to update all particle positions
   particles.forEach((particle, index) => {
@@ -213,10 +216,8 @@ function animate() {
           // increase our score
           if (enemy.type === 'boss') {
             score += 1000;
+            playSound('boss') 
             addBonus()
-            setTimeout(() => {
-              
-            }, 500 )
           } else {
             score += 250;
           }
@@ -273,10 +274,11 @@ function animate() {
         );
       }
 
-      playSound('explosive')
+      playSound('self')
       gsap.to(player, {
         radius: 0
       });
+      player.status = 'dead'
 
       // end game timeout
       setTimeout(() => {
@@ -353,31 +355,43 @@ window.addEventListener("contextmenu", (event) => {
     event.preventDefault();
     let x = event.clientX
     let y = event.clientY 
-    if (munition.infinityBullet > 0)
+    let type = 'normal'
+    if (munition.infinityBullet > 0) {
       shooter(x, y, 'infinity')
-    else
+      type = 'infinity'
+    } else {
       shooter(x, y)
+    }
+    playSound(type)  
 });
 
 function playSound(type = 'gun') {   
   switch (type) {
     case 'rocket':
-      rocketSound.volume = 0.05;
-      rocketSound.playbackRate = 3;
-      rocketSound.play();
+      playSoundDetail(rocketSound, 0.05, 3)
+      break;
+    case 'infinity':
+      playSoundDetail(infinitySound, 0.5, 1)
       break;
     case 'explosive':
-      explosiveSound.volume = 0.2;
-      explosiveSound.playbackRate = 1.5;
-      explosiveSound.play();
+      playSoundDetail(explosiveSound, 0.2, 1.5)
+      break;
+    case 'boss':
+      playSoundDetail(bossSound, 0.5, 3)
+      break;
+    case 'self':
+      playSoundDetail(selfSound, 0.3, 1)
       break;
     default:
-      // Set the volume to 0.5 (50%)
-      gunshotSound.volume = 0.02;
-      gunshotSound.playbackRate = 3.5;
-      gunshotSound.play();
+      playSoundDetail(gunshotSound, 0.1, 5)
       break;
   }
+}
+
+function playSoundDetail(soundEl, volume, speed, repeat = 1) {
+    soundEl.volume = volume;
+    soundEl.playbackRate = speed;
+    soundEl.play();
 }
 
 function addBonus() {
@@ -416,7 +430,7 @@ let isMouseOver = false;
 
 // Check mouse state & shoot
 function autoShooting() {
-  if (isMouseOver) {
+  if (isMouseOver && !isPaused && player.status === 'alive') {
       shooter(coords.x, coords.y)
       playSound()
   }
